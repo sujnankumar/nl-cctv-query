@@ -9,8 +9,8 @@ const App = () => {
   const [cctvFile, setCctvFile] = useState(null);
   const [isUploadScreen, setIsUploadScreen] = useState(false);
 
-  // Send query to Flask backend and process the response
-  const handleSendMessage = async () => {
+  // Handle sending a query (hardcoded response)
+  const handleSendMessage = () => {
     if (inputText.trim() === "") return;
 
     // Add the user's message to the chat
@@ -19,59 +19,25 @@ const App = () => {
       { text: inputText, sender: "user", type: "text" },
     ]);
 
-    try {
-      const response = await fetch("http://localhost:5000/query", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ query: inputText }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Network response was not ok");
-      }
-
-      const data = await response.json();
-
-      // Check if a video response is provided
-      if (data.video) {
-        setMessages((prevMessages) => [
-          ...prevMessages,
-          {
-            text: "Here is your video response:",
-            sender: "bot",
-            type: "video",
-            content: data.video,
-          },
-        ]);
-      } else {
-        setMessages((prevMessages) => [
-          ...prevMessages,
-          {
-            text: "No video response from server.",
-            sender: "bot",
-            type: "text",
-          },
-        ]);
-      }
-    } catch (error) {
-      console.error("Error fetching server response:", error);
+    // Instead of sending a backend request, hardcode a video response.
+    // The bot message contains a one-line caption and plays a video from the local folder.
+    setTimeout(() => {
       setMessages((prevMessages) => [
         ...prevMessages,
         {
-          text: "Error fetching response. Please try again later.",
+          text: "This is a sample video from our collection.",
           sender: "bot",
-          type: "text",
+          type: "video",
+          content: "/src/videos/output.mp4", // Ensure this video exists in your public/videos folder
         },
       ]);
-    }
+    }, 1000);
 
     // Clear the input field
     setInputText("");
   };
 
-  // Handle file upload (video) to Flask backend
+  // Handle file upload (video) to Flask backend remains unchanged
   const handleFileUpload = async (event) => {
     const file = event.target.files[0];
     if (file) {
@@ -102,7 +68,8 @@ const App = () => {
     }
   };
 
-  // Render messages based on type: text, image, or video
+  // Render messages based on type: text, image, or video.
+  // For video messages, display a caption (if provided) above the video element.
   const renderMessage = (message) => {
     switch (message.type) {
       case "text":
@@ -117,10 +84,13 @@ const App = () => {
         );
       case "video":
         return (
-          <video controls className="max-w-full rounded-lg">
-            <source src={message.content} type="video/mp4" />
-            Your browser does not support the video tag.
-          </video>
+          <div>
+            {message.text && <p>{message.text}</p>}
+            <video controls className="max-w-full rounded-lg">
+              <source src={message.content} type="video/mp4" />
+              Your browser does not support the video tag.
+            </video>
+          </div>
         );
       default:
         return null;
