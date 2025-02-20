@@ -9,7 +9,23 @@ const App = () => {
   const [cctvFile, setCctvFile] = useState(null);
   const [isUploadScreen, setIsUploadScreen] = useState(false);
 
-  // Handle sending a query (hardcoded response)
+  // Hardcoded mapping of keywords to video paths and captions.
+  const keywordVideos = {
+    accident: {
+      path: "/videos/output.mp4",
+      caption: "Video of an accident scene."
+    },
+    fire: {
+      path: "/videos/output.mp4",
+      caption: "Video of a fire incident."
+    },
+    robbery: {
+      path: "/videos/output.mp4",
+      caption: "Video of a robbery."
+    }
+  };
+
+  // Handle sending a query and checking for keywords.
   const handleSendMessage = () => {
     if (inputText.trim() === "") return;
 
@@ -19,25 +35,47 @@ const App = () => {
       { text: inputText, sender: "user", type: "text" },
     ]);
 
-    // Instead of sending a backend request, hardcode a video response.
-    // The bot message contains a one-line caption and plays a video from the local folder.
+    // Determine if a keyword exists in the query
+    const lowerQuery = inputText.toLowerCase();
+    let videoResponse = null;
+    for (const key in keywordVideos) {
+      if (lowerQuery.includes(key)) {
+        videoResponse = keywordVideos[key];
+        break;
+      }
+    }
+
+    // Simulate a delay then display response
     setTimeout(() => {
-      setMessages((prevMessages) => [
-        ...prevMessages,
-        {
-          text: "This is a sample video from our collection.",
-          sender: "bot",
-          type: "video",
-          content: "/src/videos/output.mp4", // Ensure this video exists in your public/videos folder
-        },
-      ]);
+      if (videoResponse) {
+        // If a matching keyword is found, display the video and caption.
+        setMessages((prevMessages) => [
+          ...prevMessages,
+          {
+            text: videoResponse.caption,
+            sender: "bot",
+            type: "video",
+            content: videoResponse.path,
+          },
+        ]);
+      } else {
+        // Otherwise, show a text message that no video was found.
+        setMessages((prevMessages) => [
+          ...prevMessages,
+          {
+            text: "No video found for your query.",
+            sender: "bot",
+            type: "text",
+          },
+        ]);
+      }
     }, 1000);
 
     // Clear the input field
     setInputText("");
   };
 
-  // Handle file upload (video) to Flask backend remains unchanged
+  // Handle file upload (video) to Flask backend
   const handleFileUpload = async (event) => {
     const file = event.target.files[0];
     if (file) {
@@ -68,8 +106,7 @@ const App = () => {
     }
   };
 
-  // Render messages based on type: text, image, or video.
-  // For video messages, display a caption (if provided) above the video element.
+  // Render messages based on type: text, image, or video
   const renderMessage = (message) => {
     switch (message.type) {
       case "text":
@@ -200,7 +237,9 @@ const App = () => {
                   type="text"
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
-                  onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
+                  onKeyPress={(e) =>
+                    e.key === "Enter" && handleSendMessage()
+                  }
                   placeholder="Ask about CCTV footage..."
                   className="flex-1 p-2 rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
